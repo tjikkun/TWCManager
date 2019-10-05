@@ -5,12 +5,14 @@ class Fronius:
   import requests
   import time
   
+  cacheTime   = 60
   consumedW   = 0
   debugLevel  = 0
   fetchFailed = False
   generatedW  = 0
   importW     = 0
   exportW     = 0
+  lastFetch   = 0
   serverIP    = None
   serverPort  = 80
   timeout     = 10
@@ -27,6 +29,10 @@ class Fronius:
       self.debugLog(10, "Fronius EMS Module Disabled. Skipping getConsumption")
       return 0
     
+    # Perform updates if necessary
+    self.update()
+    
+    # Return consumption value
     return self.consumedW
 
   def getGeneration(self):
@@ -34,7 +40,11 @@ class Fronius:
     if (not self.status):
       self.debugLog(10, "Fronius EMS Module Disabled. Skipping getGeneration")
       return 0
-    
+
+    # Perform updates if necessary
+    self.update()
+
+    # Return generation value
     return self.generatedW
   
   def getInverterData(self):
@@ -73,7 +83,9 @@ class Fronius:
       # Cache has expired. Fetch values from HomeAssistant sensor.
       
       inverterData = getInverterData()
+      self.debugLog(4, "inverterData: " + inverterData)
       meterData = getMeterData()
+      self.debugLog(4, "meterData: " + meterData)
     
       # Update last fetch time
       if (self.fetchFailed is not True):
