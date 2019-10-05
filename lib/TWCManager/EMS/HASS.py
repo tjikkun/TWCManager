@@ -73,12 +73,12 @@ class HASS:
     except self.requests.exceptions.ConnectionError as e: 
         self.debugLog(4, "Error connecting to HomeAssistant to fetch sensor value")
         self.debugLog(10, str(e))
-        fetchFailed = True
+        self.fetchFailed = True
         return False
     except self.requests.exceptions.ReadTimeout as e:
         self.debugLog(4, "Read Timeout occurred fetching HomeAssistant sensor value")
         self.debugLog(10, str(e))
-        fetchFailed = True
+        self.fetchFailed = True
         return False
 
     jsonResponse = httpResponse.json() if httpResponse and httpResponse.status_code == 200 else None
@@ -88,6 +88,12 @@ class HASS:
     else:
         return None
 
+  def setCacheTime(self, cacheTime):
+    self.cacheTime = cacheTime
+    
+  def setTimeout(self, timeout):
+    self.timeout = timeout
+    
   def update(self):
     # Update
     if ((int(self.time.time()) - self.lastFetch) > self.cacheTime):
@@ -110,7 +116,7 @@ class HASS:
           self.debugLog(10, "HASS Generation Entity Not Supplied. Not Querying")
 
       # Update last fetch time
-      if (self.fetchFailed is not true):
+      if (self.fetchFailed is not True):
         self.lastFetch = int(self.time.time())
         
       return True
