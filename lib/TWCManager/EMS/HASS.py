@@ -18,7 +18,7 @@ class HASS:
   status                = False
   serverIP              = None
   serverPort            = 8123
-  timeout               = 2
+  timeout               = 10
   
   def __init__(self, debugLevel, config):
     self.status                = config.get('enabled', False)
@@ -69,7 +69,8 @@ class HASS:
     self.fetchFailed = False
     
     try:
-        httpResponse = self.requests.get(url, headers=headers)
+        self.debugLog(10, "Fetching HomeAssistant EMS sensor value " + str(entity))
+        httpResponse = self.requests.get(url, headers=headers, timeout=self.timeout)
     except self.requests.exceptions.ConnectionError as e: 
         self.debugLog(4, "Error connecting to HomeAssistant to fetch sensor value")
         self.debugLog(10, str(e))
@@ -95,7 +96,8 @@ class HASS:
     self.timeout = timeout
     
   def update(self):
-    # Update
+    # Update function - determine if an update is required
+    
     if ((int(self.time.time()) - self.lastFetch) > self.cacheTime):
       # Cache has expired. Fetch values from HomeAssistant sensor.
             
@@ -104,6 +106,8 @@ class HASS:
           if (self.fetchFailed is not True):
               self.debugLog(10, "HASS getConsumption returns " + str(apivalue))
               self.consumedW = float(apivalue)
+          else:
+              self.debugLog(10, "HASS getConsumption fetch failed, using cached values")
       else:
           self.debugLog(10, "HASS Consumption Entity Not Supplied. Not Querying")
 
@@ -112,6 +116,8 @@ class HASS:
           if (self.fetchFailed is not True):
               self.debugLog(10, "HASS getGeneration returns " + str(apivalue))
               self.generatedW = float(apivalue)
+          else:
+              self.debugLog(10, "HASS getGeneration fetch failed, using cached values")
       else:
           self.debugLog(10, "HASS Generation Entity Not Supplied. Not Querying")
 
