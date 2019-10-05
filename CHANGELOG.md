@@ -4,6 +4,8 @@ This document shows the changes per release
 
 ## Current Head
 
+  * Improvements to HomeAssistant EMS module to avoid setting Consumption/Generation values to zero as a result of a connection failure, and better exception handling in general for the module.
+
 ## v1.0.0 - 2019-10-05
 
 This module provides HomeAssistant sensor functionality to the TWCManager project
