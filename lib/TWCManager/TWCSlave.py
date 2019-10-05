@@ -10,7 +10,7 @@ class TWCSlave:
     protocolVersion = 1
     minAmpsTWCSupports = 6
     masterHeartbeatData = bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-    timeLastRx = self.time.time()
+    timeLastRx = time.time()
 
     # reported* vars below are reported to us in heartbeat messages from a Slave
     # TWC.
