@@ -10,6 +10,7 @@ class HASS:
   cacheTime             = 60
   consumedW             = 0
   debugLevel            = 0
+  fetchFailed           = False
   generatedW            = 0
   hassEntityConsumption = None
   hassEntityGeneration  = None
@@ -63,12 +64,22 @@ class HASS:
         'content-type': 'application/json'
     }
 
+    # Update fetchFailed boolean to False before fetch attempt
+    # This will change to true if the fetch failed, ensuring we don't then use the value to update our cache
+    self.fetchFailed = False
+    
     try:
         httpResponse = self.requests.get(url, headers=headers)
     except self.requests.exceptions.ConnectionError as e: 
-        self.debugLog(4, "Error connecting to HomeAssistant to publish sensor values")
+        self.debugLog(4, "Error connecting to HomeAssistant to fetch sensor value")
         self.debugLog(10, str(e))
-        return 0
+        fetchFailed = True
+        return False
+    except self.requests.exceptions.ReadTimeout as e:
+        self.debugLog(4, "Read Timeout occurred fetching HomeAssistant sensor value")
+        self.debugLog(10, str(e))
+        fetchFailed = True
+        return False
 
     jsonResponse = httpResponse.json() if httpResponse and httpResponse.status_code == 200 else None
 
@@ -84,21 +95,25 @@ class HASS:
             
       if (self.hassEntityConsumption):
           apivalue = self.getAPIValue(self.hassEntityConsumption)
-          self.debugLog(10, "HASS getConsumption returns " + str(apivalue))
-          self.consumedW = float(apivalue)
+          if (self.fetchFailed is not True):
+              self.debugLog(10, "HASS getConsumption returns " + str(apivalue))
+              self.consumedW = float(apivalue)
       else:
           self.debugLog(10, "HASS Consumption Entity Not Supplied. Not Querying")
 
       if (self.hassEntityGeneration):
           apivalue = self.getAPIValue(self.hassEntityGeneration)
-          self.debugLog(10, "HASS getGeneration returns " + str(apivalue))
-          self.generatedW = float(apivalue)
+          if (self.fetchFailed is not True):
+              self.debugLog(10, "HASS getGeneration returns " + str(apivalue))
+              self.generatedW = float(apivalue)
       else:
           self.debugLog(10, "HASS Generation Entity Not Supplied. Not Querying")
 
       # Update last fetch time
-      self.lastFetch = int(self.time.time())
+      if (self.fetchFailed is not true):
+        self.lastFetch = int(self.time.time())
+        
       return True
     else:
       # Cache time has not elapsed since last fetch, serve from cache.
-      return
+      return False
