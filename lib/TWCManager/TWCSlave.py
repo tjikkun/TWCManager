@@ -1,4 +1,7 @@
 class TWCSlave:
+    
+    import time
+    
     TWCID = None
     maxAmps = None
 
@@ -7,7 +10,7 @@ class TWCSlave:
     protocolVersion = 1
     minAmpsTWCSupports = 6
     masterHeartbeatData = bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-    timeLastRx = time.time()
+    timeLastRx = self.time.time()
 
     # reported* vars below are reported to us in heartbeat messages from a Slave
     # TWC.
@@ -27,10 +30,10 @@ class TWCSlave:
     # is used for things like preventing start and stop charge on a car more
     # than once per minute.
     reportedAmpsActualSignificantChangeMonitor = -1
-    timeReportedAmpsActualChangedSignificantly = time.time()
+    timeReportedAmpsActualChangedSignificantly = self.time.time()
 
     lastAmpsOffered = -1
-    timeLastAmpsOfferedChanged = time.time()
+    timeLastAmpsOfferedChanged = self.time.time()
     lastHeartbeatDebugOutput = ''
     timeLastHeartbeatDebugOutput = 0
     wiringMaxAmps = config['config']['wiringMaxAmpsPerTWC']
@@ -83,10 +86,10 @@ class TWCSlave:
                         self.lastHeartbeatDebugOutput[m1.start(1):m1.end(1)] + \
                         debugOutputCompare[m2.end(1):]
             if (debugOutputCompare != self.lastHeartbeatDebugOutput or abs(ampsUsed - lastAmpsUsed) >= 1.0
-                or time.time() - self.timeLastHeartbeatDebugOutput > 600 or config['config']['debugLevel'] >= 11):
+                or self.time.time() - self.timeLastHeartbeatDebugOutput > 600 or config['config']['debugLevel'] >= 11):
                 print(time_now() + debugOutput)
                 self.lastHeartbeatDebugOutput = debugOutput
-                self.timeLastHeartbeatDebugOutput = time.time()
+                self.timeLastHeartbeatDebugOutput = self.time.time()
         except IndexError:
             # This happens if we try to access, say, heartbeatData[8] when
             # len(heartbeatData) < 9. This was happening due to a bug I fixed
@@ -383,7 +386,7 @@ class TWCSlave:
                timeLastGreenEnergyCheck, slaveTWCRoundRobin, spikeAmpsToCancel6ALimit, \
                chargeNowAmps, chargeNowTimeEnd, hassstatus, mqttstatus
 
-        now = time.time()
+        now = self.time.time()
         self.timeLastRx = now
 
         self.reportedAmpsMax = ((heartbeatData[1] << 8) + heartbeatData[2]) / 100
@@ -411,7 +414,7 @@ class TWCSlave:
             hassstatus.setStatus(self.TWCID, "power", self.reportedAmpsActual)
             mqttstatus.setStatus(self.TWCID, "power", self.reportedAmpsActual)
             
-        ltNow = time.localtime()
+        ltNow = self.time.localtime()
         hourNow = ltNow.tm_hour + (ltNow.tm_min / 60)
         yesterday = ltNow.tm_wday - 1
         if(yesterday < 0):
@@ -885,5 +888,5 @@ class TWCSlave:
                         desiredAmpsOffered, self.wiringMaxAmps))
 
             if(self.lastAmpsOffered != oldLastAmpsOffered):
-                self.timeLastAmpsOfferedChanged = time.time()
+                self.timeLastAmpsOfferedChanged = self.time.time()
         return self.lastAmpsOffered
