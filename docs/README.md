@@ -14,9 +14,16 @@ pip3 install commentjson paho-mqtt pyserial sysv_ipc
 ### Clone GIT Repository and copy files
 ```
 git clone https://github.com/ngardiner/TWCManager
+cd TWCManager
 git checkout v1.0.0
-cd TWCManager && make install
+make install
 ```
+
+### Configure TWCManager
+After performing the installation tasks above, edit the /etc/twcmanager/config.json file and customize to suit your environment.
+
+### Running the script
+*To be completed shortly*
 
 ## Frequently Asked Questions
 
