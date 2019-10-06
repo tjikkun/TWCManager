@@ -12,7 +12,6 @@ This release is a bugfix release for v1.0.0. It contains the following fixes:
 
   * Fixed: MQTT status connection timeout causes a delay to heartbeat timers, which then cause TWCManager reconnections to Slaves
   * Fixed: MQTT and HASS status update rates are too high. All updates now rate limited to one per minute.
-  * Fixed: Strange behaviour related to default generation tracking hour (-1). Changed this to a more sane value (8am) in the code, with a view to fixing this entire logic for the next major release (v1.1.0).
 
 ## v1.0.0 - 2019-10-05
 
