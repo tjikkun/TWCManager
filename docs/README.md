@@ -14,6 +14,7 @@ pip3 install commentjson paho-mqtt pyserial sysv_ipc
 ### Clone GIT Repository and copy files
 ```
 git clone https://github.com/ngardiner/TWCManager
+git checkout v1.0.0
 cd TWCManager && make install
 ```
 
@@ -32,3 +33,5 @@ Check the output of the TWCManager.py script. This will show you the reason for 
 ```
 03:38:12 ERROR: TWC is set to Master mode so it can't be controlled by TWCManager.  Search installation instruction PDF for 'rotary switch' and set switch so its arrow points to F on the dial.
 ```
+
+Similarly, if you are not running the TWCManager.py script and your TWC is set to Slave Mode, the same error condition will be shown via the TWC blinking red LED. In both cases, the error code is green: solid and red: 4 blinks. If you have any other error condition shown, refer to the table in your TWC user guide for specific details.
