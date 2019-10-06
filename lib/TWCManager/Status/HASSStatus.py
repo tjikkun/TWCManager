@@ -3,14 +3,17 @@
 
 class HASSStatus:
 
+  import time
   import requests
   
-  apiKey       = None
-  debugLevel   = 0
-  status       = False
-  serverIP     = None
-  serverPort   = 8123
-  timeout      = 2
+  apiKey           = None
+  debugLevel       = 0
+  msgRate          = {}
+  msgRatePerSensor = 60
+  status           = False
+  serverIP         = None
+  serverPort       = 8123
+  timeout          = 2
   
   def __init__(self, debugLevel, config):
     self.status      = config.get('enabled', False)
@@ -27,6 +30,19 @@ class HASSStatus:
     sensor = "sensor.twcmanager_" + str(twcid.decode("utf-8")) + "_" + key
 
     if (self.status):
+
+      # Perform rate limiting first (as there are some very chatty topics).
+      # For each message that comes through, we take the sensor name and check
+      # when we last updated it. If it was less than msgRatePerSensor
+      # seconds ago, we dampen it.
+      if (sensor in self.msgRate):
+        if ((self.time.time() - self.msgRate[sensor]) < self.msgRatePerSensor):
+          return True
+        else:
+          self.msgRate[sensor] = self.time.time()
+      else:
+        self.msgRate[sensor] = self.time.time()
+
       url = "http://" + self.serverIP + ":" + self.serverPort 
       url = url + "/api/states/" + sensor
       headers = {
@@ -49,5 +65,3 @@ class HASSStatus:
         self.debugLog(4, "Error during publishing HomeAssistant sensor values")
         self.debugLog(10, str(e))
         return False
-        
-
