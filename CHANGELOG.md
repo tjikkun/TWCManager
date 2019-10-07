@@ -6,6 +6,10 @@ This document shows the changes per release
 
   * Improvements to HomeAssistant EMS module to avoid setting Consumption/Generation values to zero as a result of a connection failure, and better exception handling in general for the module.
 
+## v1.0.2 - Current testing branch
+
+  * Testing code to subtract charger utilization from consumption value if enabled.
+
 ## v1.0.1 - 2019-10-06
 
 This release is a bugfix release for v1.0.0. It contains the following fixes:
