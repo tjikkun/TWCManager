@@ -42,3 +42,22 @@ Check the output of the TWCManager.py script. This will show you the reason for 
 ```
 
 Similarly, if you are not running the TWCManager.py script and your TWC is set to Slave Mode, the same error condition will be shown via the TWC blinking red LED. In both cases, the error code is green: solid and red: 4 blinks. If you have any other error condition shown, refer to the table in your TWC user guide for specific details.
+
+### Why is my car only charging at 6A?
+
+There are a few reasons why you might see your car charging only at 6 amps:
+
+  * There is less than 6A worth of generation capacity available
+     * In this case, the charger will charge at 6A (2kW), as charging below this rate is of no benefit - it would not be sufficient to power the battery conditioning, and would be very inefficient as most of the power would be lost.
+     
+  * Your configuration has not been modified from the default
+     * There are some safe defaults used in the config.json which ships with TWCManager. In particular:
+        * wiringMaxAmpsAllTWCs: The maximum number of amps that all slave TWCs are able to draw simultaneously from the shared power source. Because a load-balanced TWC installation involves each of the TWCs sharing the same power feed, we need to configure a maximum allocation of current for all connected TWCs. This is set to 6A by default.
+        * wiringMaxAmpsPerTWC: The maximum number of amps that each individual TWC is capable of drawing. If you think of the previous value (AllTWCs) as the capacity of the trunk power source that all TWCs are drawing from, this value (PerTWC) is the capability of each indiviual TWC, based on the wire gauge between the shared power source and the individual TWC. In a single TWC installation, this will be equal to the value of wiringMaxAmpsAllTWCs.
+        
+  * Conflict between Charger Consumption and Consumption Sensor
+     * There are two ways in which your charger may be wired in an environment where you are able to access a consumption sensor:
+        * The charger may be monitored as part of the consumption meter.
+        * Your charger may not be monitored as part of the consumption meter.
+     * If your charger is not monitored by the consumption meter, you do not need to make any changes to the default configuration. This configuration assumes that when you access consumption data, it does not count the charging load.
+     * If your charging load/draw is counted by the consumption meter, this would cause the charger to be consistently forced down to 6A, as all of the generation would be canceled out by the power you draw to charge the vehicle.
