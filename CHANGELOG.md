@@ -9,6 +9,7 @@ This document shows the changes per release
 ## v1.0.2 - Current testing branch
 
   * Testing code to subtract charger utilization from consumption value if enabled.
+  * Updated status output to more clearly define the generation and consumption values being tracked.
 
 ## v1.0.1 - 2019-10-06
 
