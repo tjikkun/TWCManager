@@ -1521,7 +1521,7 @@ hass = HASS(config['config']['debugLevel'], config['sources']['HASS'])
 hassstatus = HASSStatus(config['config']['debugLevel'],config['status']['HASS'])
 
 # Create mqtt status plugin instance
-mqttstatus = MQTTStatus(config['config']['debugLevel'],config['status']['MQTT']['enabled'], config['status']['MQTT']['brokerIP'], config['status']['MQTT']['topicPrefix'])
+mqttstatus = MQTTStatus(config['config']['debugLevel'],config['status']['MQTT'])
 
 while True:
     try:
