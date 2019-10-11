@@ -22,14 +22,14 @@ class MQTTStatus:
   def __init__(self, debugLevel, config):
     self.debugLevel  = debugLevel
     self.status      = config.get('enabled', False)
-    self.serverIP    = config.get('serverIP', None)
+    self.serverIP    = config.get('brokerIP', None)
     self.topicPrefix = config.get('topicPrefix', None)
     self.username    = config.get('username', None)
     self.password    = config.get('password', None)
 
   def debugLog(self, minlevel, message):
     if (self.debugLevel >= minlevel):
-      print("debugLog: (" + str(minlevel) + ") " + message)
+      print("MQTTStatus: (" + str(minlevel) + ") " + message)
 
   def setStatus(self, twcid, key, value):
     if (self.status):
@@ -61,8 +61,9 @@ class MQTTStatus:
 
       # Now, we attempt to establish a connection to the MQTT broker
       if (self.connectionState == 0):
+        self.debugLog(10, "MQTT Status: Attempting to Connect")
         try:
-          client = self.mqtt.Client("P1")
+          client = self.mqtt.Client()
           if (self.username and self.password):
             client.username_pw_set(self.username, self.password)
           client.on_connect = self.mqttConnected
@@ -83,17 +84,21 @@ class MQTTStatus:
     # connects to the MQTT server. It will then publish all queued messages
     # to the server, and then disconnect.
 
+    self.debugLog(10, "Connected")
+    self.debugLog(11, "Copy Message Buffer")
     self.msgQueueBuffer = self.msgQueue.copy()
+    self.debugLog(11, "Clear Message Buffer")
     self.msgQueue.clear()
 
     for msg in self.msgQueueBuffer:
+      self.debugLog(8, "Publishing MQTT Topic " + str(msg[topic]))
       try:
         client.publish(msg[topic], payload=msg[payload])
       except e:
         self.debugLog(4, "Error publishing MQTT Topic Status")
         self.debugLog(10, str(e))
-        return False
 
     client.loop_stop()
+    self.msgQueueBuffer.clear()
     self.connectionState = 0
     client.disconnect()
