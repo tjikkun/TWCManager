@@ -67,3 +67,28 @@ There are a few reasons why you might see your car charging only at 6 amps:
    * 6A is the default minAmpsPerTWC setting. 
    * Charging at 240V 5A wastes 8.6% more energy than charging at 240V 10A.
       * Because of this, it is important to find a point at which you are comfortable setting a floor for charging current. If this is set too low, it will be inefficient. 
+
+### Why doesn't charging stop when Solar generation drops below minimum
+
+   * There are a few different ways in which we can stop a car from charging on a TWC:
+
+      * V1 Chargers
+
+The first revision of TWC chargers were able to stop charging by setting the maxAmps value to 0 amps. This is not effective for newer TWC chargers, however.
+
+      * Stop communicating with the Slave TWCs. 
+      
+This is effective, in that stopping communications with a Slave TWC will stop the car from charging. Unfortunately the byproduct of this is that this can sometimes result in the car going into an error state, where charging can only be restarted by unplugging and replugging the TWC.
+
+In an upcoming release, this will be offered as a switchable option to replace the use of Tesla API keys for those who are not comfortable with providing their credentials to the script.
+      
+      * Use the Tesla API to connect to the car, sending a command to stop/start charging.
+
+This is set up using the web interface. Log in with your Tesla login and password, and the login token will be stored locally within a settings file.
+
+If you have multiple cars, TWCManager will attempt to identify which cars are home using geofencing. The following page of the TMC forums thread explains it better than I could: https://teslamotorsclub.com/tmc/threads/new-wall-connector-load-sharing-protocol.72830/page-16
+
+### Why do I need to log into my Tesla account when using the web interface?
+
+   * TWCManager uses your Tesla login to obtain an API token. This API token is used to talk to your vehicle(s).
+   * When the available charger capacity falls below minAmpsPerTWC, 
