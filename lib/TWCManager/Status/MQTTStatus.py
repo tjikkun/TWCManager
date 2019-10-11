@@ -13,15 +13,19 @@ class MQTTStatus:
   msgQueueMax     = 16
   msgRate         = {}
   msgRatePerTopic = 60
+  password        = None
   status          = False
   serverIP        = None
   topicPrefix     = None
+  username        = None
 
-  def __init__(self, debugLevel, status, serverIP, topicPrefix):
+  def __init__(self, debugLevel, config):
     self.debugLevel  = debugLevel
-    self.status      = status
-    self.serverIP    = serverIP
-    self.topicPrefix = topicPrefix
+    self.status      = config.get('enabled', False)
+    self.serverIP    = config.get('serverIP', None)
+    self.topicPrefix = config.get('topicPrefix', None)
+    self.username    = config.get('username', None)
+    self.password    = config.get('password', None)
 
   def debugLog(self, minlevel, message):
     if (self.debugLevel >= minlevel):
@@ -59,6 +63,8 @@ class MQTTStatus:
       if (self.connectionState == 0):
         try:
           client = self.mqtt.Client("P1")
+          if (self.username and self.password):
+            client.username_pw_set(self.username, self.password)
           client.on_connect = self.mqttConnected
           client.connect_async(self.serverIP)
           self.connectionState = 1
