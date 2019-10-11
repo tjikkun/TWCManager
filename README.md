@@ -18,7 +18,7 @@ EMS Interfaces read solar generation and/or consumption values from an external 
 
 | Platform         | Status        | Details                 |
 | ---------------- | ------------- | ----------------------- |
-| Fronius Inverter | In Progress   | Expected in next release |
+| Fronius Inverter | Available v1.1.0 (Soon) | Expected in next release |
 | HomeAssistant    | Available v1.0.1 | Allows fetching generation and consumption from HomeAssistant sensors |
 | Tesla Powerwall2 | Planned        | Expected by Mid-October 2019 |
 
@@ -30,6 +30,12 @@ Status interfaces publish TWCManager status information to external systems. Cur
 | ---------------- | ---------------- | ----------------------- |
 | HomeAssistant    | Available v1.0.1 | Provides HASS sensors to monitor TWCManager State |
 | MQTT             | Available v1.0.1 | Publishes MQTT topics to monitor TWCManager State |
+
+### Vehicle Interfaces
+
+| Platform    | Status           | Details                 |
+| ----------- | ---------------- | ----------------------- |
+| TeslaAPI    | Available v1.0.0 | Allows start/stop charging via Tesla API |
 
 ## Warnings
 
