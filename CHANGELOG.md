@@ -13,6 +13,11 @@ This document shows the changes per release
 
   * Separation of Tesla API class from TWCManager code, this allows pluggable modules for interfacing with vehicles.
   * Added Fronius EMS module - read generation and consumption values from a Fronius inverter.
+  * Added MQTT authentication for MQTT Status module.
+  
+### Fixes
+
+  * Fixed settings file location path which had issues if no trailing slash.
 
 ## v1.0.2 - 2019-10-11
 
