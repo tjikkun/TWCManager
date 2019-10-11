@@ -65,6 +65,7 @@ All installation documentation (Physical and Software) is contained in the docum
 
 # Attribution
 * Original TWCManager distribution by [cdragon](https://github.com/cdragon/TWCManager)
+   * The effort by @cdragon cannot be understated, if you would like to read more about the intense hardware hacking that was done to make this project a reality, read this [thread](https://teslamotorsclub.com/tmc/threads/new-wall-connector-load-sharing-protocol.72830).
 * Integrated improvements from [flodom's](https://github.com/flodorn/TWCManager) TWCManager fork. 
     * Support for multiple vehicles on multiple chargers
     * Support for publishing status to MQTT topics
