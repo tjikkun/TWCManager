@@ -103,6 +103,17 @@
         # not needed and can be set to 0
         "greenEnergyAmpsOffset": 0,
                 
+        # In some environments, the consumption meter value that we obtain will
+        # include the charger's consumption, whilst others will not.
+        # This switch, if set to true, will subtract the charger's load from the
+        # consumption value, ensuring that the charger itself doesn't register
+        # in your solar consumption value.
+
+        # If your solar consumption value does include the charger and you don't
+        # set this option, you'll see charging consistently stop after a short
+        # time interval, due to the available amps being set below minimum charge.
+        "subtractChargerLoad": false,
+        
         # Choose how much debugging info to output.
         # 0 is no output other than errors.
         # 1 is just the most useful info.
