@@ -61,3 +61,9 @@ There are a few reasons why you might see your car charging only at 6 amps:
         * Your charger may not be monitored as part of the consumption meter.
      * If your charger is not monitored by the consumption meter, you do not need to make any changes to the default configuration. This configuration assumes that when you access consumption data, it does not count the charging load.
      * If your charging load/draw is counted by the consumption meter, this would cause the charger to be consistently forced down to 6A, as all of the generation would be canceled out by the power you draw to charge the vehicle.
+
+### Why 6A?
+
+   * 6A is the default minAmpsPerTWC setting. 
+   * Charging at 240V 5A wastes 8.6% more energy than charging at 240V 10A.
+      * Because of this, it is important to find a point at which you are comfortable setting a floor for charging current. If this is set too low, it will be inefficient. 
