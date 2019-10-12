@@ -48,6 +48,7 @@ from lib.TWCManager.EMS.Fronius import Fronius
 from lib.TWCManager.EMS.HASS import HASS
 from lib.TWCManager.Status.HASSStatus import HASSStatus
 from lib.TWCManager.Status.MQTTStatus import MQTTStatus
+from lib.TWCManager.Vehicle.TeslaAPI import CarApi
 
 ##########################
 # Load Configuration File
@@ -451,7 +452,7 @@ def num_cars_charging_now():
     return carsCharging
 
 def new_slave(newSlaveID, maxAmps):
-    global slaveTWCs, slaveTWCRoundRobin
+    global slaveTWCs, slaveTWCRoundRobin, carapi
 
     try:
         slaveTWC = slaveTWCs[newSlaveID]
@@ -461,7 +462,7 @@ def new_slave(newSlaveID, maxAmps):
     except KeyError:
         pass
 
-    slaveTWC = TWCSlave(newSlaveID, maxAmps)
+    slaveTWC = TWCSlave(newSlaveID, maxAmps, carapi)
     slaveTWCs[newSlaveID] = slaveTWC
     slaveTWCRoundRobin.append(slaveTWC)
 
@@ -503,8 +504,8 @@ def total_amps_actual_all_twcs():
 
 def car_api_available(email = None, password = None, charge = None):
     global config, carApiLastErrorTime, carApiErrorRetryMins, \
-           carApiTransientErrors, carApiBearerToken, carApiRefreshToken, \
-           carApiTokenExpireTime, carApiVehicles
+           carapi, carApiBearerToken, carApiRefreshToken, \
+           carApiTokenExpireTime
 
     now = time.time()
     apiResponseDict = {}
@@ -584,7 +585,7 @@ def car_api_available(email = None, password = None, charge = None):
         save_settings()
 
     if(carApiBearerToken != ''):
-        if(len(carApiVehicles) < 1):
+        if(carapi.getVehicleCount() < 1):
             cmd = 'curl -s -m 60 -H "accept: application/json" -H "Authorization:Bearer ' + \
                   carApiBearerToken + \
                   '" "https://owner-api.teslamotors.com/api/1/vehicles"'
@@ -600,7 +601,7 @@ def car_api_available(email = None, password = None, charge = None):
                     print(time_now() + ': Car API vehicle list', apiResponseDict, '\n')
 
                 for i in range(0, apiResponseDict['count']):
-                    carApiVehicles.append(CarApiVehicle(apiResponseDict['response'][i]['id'], config))
+                    carapi.addVehicle(apiResponseDict['response'][i]['id'])
             except (KeyError, TypeError):
                 # This catches cases like trying to access
                 # apiResponseDict['response'] when 'response' doesn't exist in
@@ -610,10 +611,10 @@ def car_api_available(email = None, password = None, charge = None):
                 carApiLastErrorTime = now
                 return False
 
-        if(len(carApiVehicles) > 0):
+        if(carapi.getVehicleCount() > 0):
             # Wake cars if needed
             needSleep = False
-            for vehicle in carApiVehicles:
+            for for vehicle in carapi.getCarApiVehicles():
                 if(charge == True and vehicle.stopAskingToStartCharging):
                     if(config['config']['debugLevel'] >= 8):
                         print(time_now() + ": Don't charge vehicle " + str(vehicle.ID)
@@ -765,7 +766,7 @@ def car_api_available(email = None, password = None, charge = None):
                             foundKnownError = False
                             if('error' in apiResponseDict):
                                 error = apiResponseDict['error']
-                                for knownError in carApiTransientErrors:
+                                for knownError in carapi.getCarApiTransientErrors():
                                     if(knownError == error[0:len(knownError)]):
                                         foundKnownError = True
                                         break
@@ -840,7 +841,7 @@ def car_api_charge(charge):
     # Do not call this function directly.  Call by using background thread:
     # queue_background_task({'cmd':'charge', 'charge':<True/False>})
     global carApiLastErrorTime, carApiErrorRetryMins, \
-           carApiTransientErrors, carApiVehicles, carApiLastStartOrStopChargeTime, \
+           carapi, carApiLastStartOrStopChargeTime, \
            homeLat, homeLon, config
 
     now = time.time()
@@ -848,7 +849,7 @@ def car_api_charge(charge):
     if(not charge):
         # Whenever we are going to tell vehicles to stop charging, set
         # vehicle.stopAskingToStartCharging = False on all vehicles.
-        for vehicle in carApiVehicles:
+        for vehicle in carapi.getCarApiVehicles():
             vehicle.stopAskingToStartCharging = False
 
     if(now - carApiLastStartOrStopChargeTime < 60):
@@ -867,7 +868,7 @@ def car_api_charge(charge):
     if(config['config']['debugLevel'] >= 8):
         print("startOrStop is set to " + str(startOrStop))
         
-    for vehicle in carApiVehicles:
+    for vehicle in carapi.getCarApiVehicles():
         if(charge and vehicle.stopAskingToStartCharging):
             if(config['config']['debugLevel'] >= 8):
                 print(time_now() + ": Don't charge vehicle " + str(vehicle.ID)
@@ -882,7 +883,7 @@ def car_api_charge(charge):
         # more than once per minute.
         carApiLastStartOrStopChargeTime = now
 
-        if(config['config']['onlyChargeMultiCarsAtHome'] and len(carApiVehicles) > 1):
+        if(config['config']['onlyChargeMultiCarsAtHome'] and carapi.getVehicleCount() > 1):
             # When multiple cars are enrolled in the car API, only start/stop
             # charging cars parked at home.
 
@@ -972,7 +973,7 @@ def car_api_charge(charge):
                     if('error' in apiResponseDict):
                         foundKnownError = False
                         error = apiResponseDict['error']
-                        for knownError in carApiTransientErrors:
+                        for knownError in carapi.getCarApiTransientErrors():
                             if(knownError == error[0:len(knownError)]):
                                 # I see these errors often enough that I think
                                 # it's worth re-trying in 1 minute rather than
@@ -1145,6 +1146,7 @@ def check_green_energy():
 #
 
 class CarApiVehicle:
+    carapi = None
     config = None
     ID     = None
 
@@ -1158,6 +1160,7 @@ class CarApiVehicle:
     lon = 10000
 
     def __init__(self, ID):
+        self.carapi     = carapi
         self.config     = config
         self.debugLevel = config['config']['debugLevel']
         self.ID         = ID
@@ -1188,7 +1191,7 @@ class CarApiVehicle:
         return False
 
     def update_location(self):
-        global carApiLastErrorTime, carApiTransientErrors
+        global carApiLastErrorTime
 
         if(self.ready() == False):
             return False
@@ -1218,7 +1221,7 @@ class CarApiVehicle:
                 if('error' in apiResponseDict):
                     foundKnownError = False
                     error = apiResponseDict['error']
-                    for knownError in carApiTransientErrors:
+                    for knownError in self.carapi.getCarApiTransientErrors():
                         if(knownError == error[0:len(knownError)]):
                             # I see these errors often enough that I think
                             # it's worth re-trying in 1 minute rather than
@@ -1401,28 +1404,6 @@ webMsgResult = 0
 timeTo0Aafter06 = 0
 timeToRaise2A = 0
 
-carApiLastErrorTime = 0
-carApiBearerToken = ''
-carApiRefreshToken = ''
-carApiTokenExpireTime = time.time()
-carApiLastStartOrStopChargeTime = 0
-carApiVehicles = []
-
-# Transient errors are ones that usually disappear if we retry the car API
-# command a minute or less later.
-# 'vehicle unavailable:' sounds like it implies the car is out of connection
-# range, but I once saw it returned by drive_state after wake_up returned
-# 'online'. In that case, the car is reacahble, but drive_state failed for some
-# reason. Thus we consider it a transient error.
-# Error strings below need only match the start of an error response such as:
-# {'response': None, 'error_description': '',
-# 'error': 'operation_timedout for txid `4853e3ad74de12733f8cc957c9f60040`}'}
-carApiTransientErrors = ['upstream internal error', 'operation_timedout',
-'vehicle unavailable']
-
-# Define minutes between retrying non-transient errors.
-carApiErrorRetryMins = 10
-
 homeLat = 10000
 homeLon = 10000
 
@@ -1507,19 +1488,12 @@ print("TWC Manager starting as fake %s with id %02X%02X and sign %02X" \
     % ( ("Master" if config['config']['fakeMaster'] else "Slave"), \
     ord(fakeTWCID[0:1]), ord(fakeTWCID[1:2]), ord(slaveSign)))
 
-# Instantiate a master object
+# Instantiate necessary classes
 master = TWCMaster(fakeTWCID, config)
-
-# Create fronius EMS plugin instance
+carapi = CarApi(config)
 fronius = Fronius(config['config']['debugLevel'], config['sources']['Fronius'])
-
-# Create hass EMS plugin instance
 hass = HASS(config['config']['debugLevel'], config['sources']['HASS'])
-
-# Create hass status plugin instance
 hassstatus = HASSStatus(config['config']['debugLevel'],config['status']['HASS'])
-
-# Create mqtt status plugin instance
 mqttstatus = MQTTStatus(config['config']['debugLevel'],config['status']['MQTT'])
 
 while True:
@@ -1752,7 +1726,7 @@ while True:
                         + '\n'
                         )
 
-                    for vehicle in carApiVehicles:
+                    for vehicle in carapi.getCarApiVehicles():
                         webResponseMsg += str(vehicle.__dict__) + '\n'
 
                     webResponseMsg += 'slaveTWCRoundRobin:\n'
