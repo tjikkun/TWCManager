@@ -6,6 +6,8 @@ class MQTTStatus:
   import time
   import paho.mqtt.client as mqtt
 
+  brokerIP        = None
+  brokerPort      = 1883
   connectionState = 0
   debugLevel      = 0
   msgQueue        = []
@@ -15,14 +17,14 @@ class MQTTStatus:
   msgRatePerTopic = 60
   password        = None
   status          = False
-  serverIP        = None
+  serverTLS       = None
   topicPrefix     = None
   username        = None
 
   def __init__(self, debugLevel, config):
     self.debugLevel  = debugLevel
     self.status      = config.get('enabled', False)
-    self.serverIP    = config.get('brokerIP', None)
+    self.brokerIP    = config.get('brokerIP', None)
     self.topicPrefix = config.get('topicPrefix', None)
     self.username    = config.get('username', None)
     self.password    = config.get('password', None)
@@ -67,7 +69,7 @@ class MQTTStatus:
           if (self.username and self.password):
             client.username_pw_set(self.username, self.password)
           client.on_connect = self.mqttConnected
-          client.connect_async(self.serverIP)
+          client.connect_async(self.brokerIP, port=self.brokerPort, keepalive=30)
           self.connectionState = 1
           client.loop_start()
         except ConnectionRefusedError as e:
@@ -84,16 +86,16 @@ class MQTTStatus:
     # connects to the MQTT server. It will then publish all queued messages
     # to the server, and then disconnect.
 
-    self.debugLog(10, "Connected")
+    self.debugLog(10, "Connected to MQTT Broker with RC: " + str(rc))
     self.debugLog(11, "Copy Message Buffer")
     self.msgQueueBuffer = self.msgQueue.copy()
     self.debugLog(11, "Clear Message Buffer")
     self.msgQueue.clear()
 
     for msg in self.msgQueueBuffer:
-      self.debugLog(8, "Publishing MQTT Topic " + str(msg[topic]))
+      self.debugLog(8, "Publishing MQTT Topic " + str(msg['topic']))
       try:
-        client.publish(msg[topic], payload=msg[payload])
+        client.publish(msg['topic'], payload=msg['payload'])
       except e:
         self.debugLog(4, "Error publishing MQTT Topic Status")
         self.debugLog(10, str(e))
