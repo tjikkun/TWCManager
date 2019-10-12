@@ -501,13 +501,12 @@ def total_amps_actual_all_twcs():
 
 
 def car_api_available(email = None, password = None, charge = None):
-    global config, carApiLastErrorTime, carApiErrorRetryMins, \
-           carapi, carApiTokenExpireTime
+    global config, carApiLastErrorTime, carapi, carApiTokenExpireTime
 
     now = time.time()
     apiResponseDict = {}
 
-    if(now - carApiLastErrorTime < carApiErrorRetryMins*60):
+    if(now - carApiLastErrorTime < (carapi.getCarApiErrorRetryMins()*60)):
         # It's been under carApiErrorRetryMins minutes since the car API
         # generated an error. To keep strain off Tesla's API servers, wait
         # carApiErrorRetryMins mins till we try again. This delay could be
@@ -521,7 +520,7 @@ def car_api_available(email = None, password = None, charge = None):
         # automatically.
         if(config['config']['debugLevel'] >= 11):
             print(time_now() + ': Car API disabled for ' +
-                  str(int(carApiErrorRetryMins*60 - (now - carApiLastErrorTime))) +
+                  str(int(carapi.getCarApiErrorRetryMins()*60 - (now - carApiLastErrorTime))) +
                   ' more seconds due to recent error.')
         return False
 
@@ -604,7 +603,7 @@ def car_api_available(email = None, password = None, charge = None):
                 # apiResponseDict['response'] when 'response' doesn't exist in
                 # apiResponseDict.
                 print(time_now() + ": ERROR: Can't get list of vehicles via Tesla car API.  Will try again in "
-                      + str(carApiErrorRetryMins) + " minutes.")
+                      + str(carapi.getCarApiErrorRetryMins()) + " minutes.")
                 carApiLastErrorTime = now
                 return False
 
@@ -618,14 +617,14 @@ def car_api_available(email = None, password = None, charge = None):
                               + " because vehicle.stopAskingToStartCharging == True")
                     continue
 
-                if(now - vehicle.lastErrorTime < carApiErrorRetryMins*60):
+                if(now - vehicle.lastErrorTime < (carapi.getCarApiErrorRetryMins()*60)):
                     # It's been under carApiErrorRetryMins minutes since the car
                     # API generated an error on this vehicle. Don't send it more
                     # commands yet.
                     if(config['config']['debugLevel'] >= 8):
                         print(time_now() + ": Don't send commands to vehicle " + str(vehicle.ID)
                               + " because it returned an error in the last "
-                              + str(carApiErrorRetryMins) + " minutes.")
+                              + str(carapi.getCarApiErrorRetryMins()) + " minutes.")
                     continue
 
                 if(vehicle.ready()):
@@ -808,7 +807,7 @@ def car_api_available(email = None, password = None, charge = None):
                           ((now - vehicle.firstWakeAttemptTime) / 60 / 60),
                           str(apiResponseDict)))
 
-    if(now - carApiLastErrorTime < carApiErrorRetryMins*60 or carapi.getCarApiBearerToken() == ''):
+    if(now - carApiLastErrorTime < (carapi.getCarApiErrorRetryMins()*60) or carapi.getCarApiBearerToken() == ''):
         if(config['config']['debugLevel'] >= 8):
             print(time_now() + ": car_api_available returning False because of recent carApiLasterrorTime "
                 + str(now - carApiLastErrorTime) + " or empty carApiBearerToken '"
@@ -837,8 +836,7 @@ def car_api_available(email = None, password = None, charge = None):
 def car_api_charge(charge):
     # Do not call this function directly.  Call by using background thread:
     # queue_background_task({'cmd':'charge', 'charge':<True/False>})
-    global carApiLastErrorTime, carApiErrorRetryMins, \
-           carapi, homeLat, homeLon, config
+    global carApiLastErrorTime, carapi, homeLat, homeLon, config
 
     now = time.time()
     apiResponseDict = {}
