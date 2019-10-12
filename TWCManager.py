@@ -600,7 +600,7 @@ def car_api_available(email = None, password = None, charge = None):
                     print(time_now() + ': Car API vehicle list', apiResponseDict, '\n')
 
                 for i in range(0, apiResponseDict['count']):
-                    carApiVehicles.append(CarApiVehicle(apiResponseDict['response'][i]['id']))
+                    carApiVehicles.append(CarApiVehicle(apiResponseDict['response'][i]['id'], config))
             except (KeyError, TypeError):
                 # This catches cases like trying to access
                 # apiResponseDict['response'] when 'response' doesn't exist in
@@ -1145,7 +1145,8 @@ def check_green_energy():
 #
 
 class CarApiVehicle:
-    ID = None
+    config = None
+    ID     = None
 
     firstWakeAttemptTime = 0
     lastWakeAttemptTime = 0
@@ -1157,16 +1158,21 @@ class CarApiVehicle:
     lon = 10000
 
     def __init__(self, ID):
-        self.ID = ID
+        self.config     = config
+        self.debugLevel = config['config']['debugLevel']
+        self.ID         = ID
+
+    def debugLog(self, minlevel, message):
+      if (self.debugLevel >= minlevel):
+        print("TeslaAPI: (" + str(minlevel) + ") " + message)
 
     def ready(self):
-        global config, carApiLastErrorTime, carApiErrorRetryMins
+        global carApiLastErrorTime, carApiErrorRetryMins
 
         if(time.time() - self.lastErrorTime < carApiErrorRetryMins*60):
             # It's been under carApiErrorRetryMins minutes since the car API
             # generated an error on this vehicle. Return that car is not ready.
-            if(config['config']['debugLevel'] >= 8):
-                print(time_now() + ': Vehicle ' + str(self.ID)
+            debugLog(8, ': Vehicle ' + str(self.ID)
                     + ' not ready because of recent lastErrorTime '
                     + str(self.lastErrorTime))
             return False
@@ -1178,9 +1184,7 @@ class CarApiVehicle:
             # was issued.  Times I've tested: 1:35, 1:57, 2:30
             return True
 
-        if(config['config']['debugLevel'] >= 8):
-            print(time_now() + ': Vehicle ' + str(self.ID)
-                + " not ready because it wasn't woken in the last 2 minutes.")
+        debugLog(8, ': Vehicle ' + str(self.ID) + " not ready because it wasn't woken in the last 2 minutes.")
         return False
 
     def update_location(self):
@@ -1198,8 +1202,7 @@ class CarApiVehicle:
 
         # Retry up to 3 times on certain errors.
         for retryCount in range(0, 3):
-            if(config['config']['debugLevel'] >= 8):
-                print(time_now() + ': Car API cmd', cmd)
+            debugLog(8, ': Car API cmd' + cmd)
             try:
                 apiResponseDict = json.loads(run_process(cmd).decode('ascii'))
                 # This error can happen here as well:
@@ -1210,8 +1213,7 @@ class CarApiVehicle:
                 pass
 
             try:
-                if(config['config']['debugLevel'] >= 4):
-                    print(time_now() + ': Car API vehicle GPS location', apiResponseDict, '\n')
+                debugLog(4, ': Car API vehicle GPS location' + apiResponseDict + '\n')
 
                 if('error' in apiResponseDict):
                     foundKnownError = False
@@ -1222,9 +1224,7 @@ class CarApiVehicle:
                             # it's worth re-trying in 1 minute rather than
                             # waiting carApiErrorRetryMins minutes for retry
                             # in the standard error handler.
-                            if(config['config']['debugLevel'] >= 1):
-                                print(time_now() + ": Car API returned '"
-                                      + error
+                            debugLog(1, "Car API returned '" + error
                                       + "' when trying to get GPS location.  Try again in 1 minute.")
                             time.sleep(60)
                             foundKnownError = True
@@ -1248,8 +1248,7 @@ class CarApiVehicle:
                 # This catches cases like trying to access
                 # apiResponseDict['response'] when 'response' doesn't exist in
                 # apiResponseDict.
-                if(config['config']['debugLevel'] >= 1):
-                    print(time_now() + ": ERROR: Can't get GPS location of vehicle " + str(self.ID) + \
+                debugLog(1, ": ERROR: Can't get GPS location of vehicle " + str(self.ID) + \
                           ".  Will try again later.")
                 self.lastErrorTime = time.time()
                 return False
