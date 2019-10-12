@@ -120,8 +120,7 @@ def load_settings():
     global config, nonScheduledAmpsMax, scheduledAmpsMax, \
            scheduledAmpsStartHour, scheduledAmpsEndHour, \
            scheduledAmpsDaysBitmap, hourResumeTrackGreenEnergy, kWhDelivered, \
-           carapi, carApiRefreshToken, carApiTokenExpireTime, \
-           homeLat, homeLon
+           carapi, carApiTokenExpireTime, homeLat, homeLon
 
     try:
         fh = open(config['config']['settingsPath'] + "TWCManager.settings", 'r')
@@ -185,9 +184,9 @@ def load_settings():
 
             m = re.search(r'^\s*carApiRefreshToken\s*=\s*(.+)', line, re.MULTILINE)
             if(m):
-                carApiRefreshToken = m.group(1)
+                carapi.setCarApiRefreshToken(m.group(1))
                 if(config['config']['debugLevel'] >= 10):
-                    print("load_settings: carApiRefreshToken set to " + str(carApiRefreshToken))
+                    print("load_settings: carApiRefreshToken set to " + str(m.group(1)))
                 continue
 
             m = re.search(r'^\s*carApiTokenExpireTime\s*=\s*(.+)', line, re.MULTILINE)
@@ -222,8 +221,7 @@ def save_settings():
     global config, nonScheduledAmpsMax, scheduledAmpsMax, \
            scheduledAmpsStartHour, scheduledAmpsEndHour, \
            scheduledAmpsDaysBitmap, hourResumeTrackGreenEnergy, kWhDelivered, \
-           carapi, carApiRefreshToken, carApiTokenExpireTime, \
-           homeLat, homeLon
+           carapi, carApiTokenExpireTime, homeLat, homeLon
 
     fh = open(config['config']['settingsPath'] + "TWCManager.settings", 'w')
     fh.write('nonScheduledAmpsMax=' + str(nonScheduledAmpsMax) +
@@ -234,7 +232,7 @@ def save_settings():
             '\nhourResumeTrackGreenEnergy=' + str(hourResumeTrackGreenEnergy) +
             '\nkWhDelivered=' + str(kWhDelivered) +
             '\ncarApiBearerToken=' + str(carapi.getCarApiBearerToken()) +
-            '\ncarApiRefreshToken=' + str(carApiRefreshToken) +
+            '\ncarApiRefreshToken=' + str(carapi.getCarApiRefreshToken()) +
             '\ncarApiTokenExpireTime=' + str(int(carApiTokenExpireTime)) +
             '\nhomeLat=' + str(homeLat) +
             '\nhomeLon=' + str(homeLon)
@@ -504,7 +502,7 @@ def total_amps_actual_all_twcs():
 
 def car_api_available(email = None, password = None, charge = None):
     global config, carApiLastErrorTime, carApiErrorRetryMins, \
-           carapi, carApiRefreshToken, carApiTokenExpireTime
+           carapi, carApiTokenExpireTime
 
     now = time.time()
     apiResponseDict = {}
@@ -535,12 +533,12 @@ def car_api_available(email = None, password = None, charge = None):
         # If we don't have a bearer token or our refresh token will expire in
         # under 30 days, get a new bearer token.  Refresh tokens expire in 45
         # days when first issued, so we'll get a new token every 15 days.
-        if(carApiRefreshToken != ''):
+        if(carapi.getCarApiRefreshToken() != ''):
             cmd = 'curl -s -m 60 -X POST -H "accept: application/json" -H "Content-Type: application/json" -d \'' + \
                   json.dumps({'grant_type': 'refresh_token', \
                               'client_id': '81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384', \
                               'client_secret': 'c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3', \
-                              'refresh_token': carApiRefreshToken }) + \
+                              'refresh_token': carapi.getCarApiRefreshToken() }) + \
                   '\' "https://owner-api.teslamotors.com/oauth/token"'
         elif(email != None and password != None):
             cmd = 'curl -s -m 60 -X POST -H "accept: application/json" -H "Content-Type: application/json" -d \'' + \
@@ -568,7 +566,7 @@ def car_api_available(email = None, password = None, charge = None):
             if(config['config']['debugLevel'] >= 4):
                 print(time_now() + ': Car API auth response', apiResponseDict, '\n')
             carapi.setCarApiBearerToken(apiResponseDict['access_token'])
-            carApiRefreshToken = apiResponseDict['refresh_token']
+            carapi.setCarApiRefreshToken(apiResponseDict['refresh_token'])
             carApiTokenExpireTime = now + apiResponseDict['expires_in']
         except KeyError:
             print(time_now() + ": ERROR: Can't access Tesla car via API.  Please log in again via web interface.")
@@ -579,7 +577,7 @@ def car_api_available(email = None, password = None, charge = None):
             # ten minutes with a bad token because Tesla might decide to block
             # remote access to your car after too many authorization errors.
             carapi.setCarApiBearerToken()
-            carApiRefreshToken = ''
+            carapi.setCarApiRefreshToken()
 
         save_settings()
 
