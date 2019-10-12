@@ -2,7 +2,8 @@ class TWCSlave:
     
     import time
     
-    TWCID = None
+    carapi  = None
+    TWCID   = None
     maxAmps = None
 
     # Protocol 2 TWCs tend to respond to commands sent using protocol 1, so
@@ -38,8 +39,9 @@ class TWCSlave:
     timeLastHeartbeatDebugOutput = 0
     wiringMaxAmps = config['config']['wiringMaxAmpsPerTWC']
 
-    def __init__(self, TWCID, maxAmps):
-        self.TWCID = TWCID
+    def __init__(self, TWCID, maxAmps, carapi):
+        self.carapi  = carapi
+        self.TWCID   = TWCID
         self.maxAmps = maxAmps
 
     def print_status(self, heartbeatData):
