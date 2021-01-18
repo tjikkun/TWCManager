@@ -5,8 +5,8 @@ After=syslog.target network.target
 [Service]
 Type=simple
 User=pi
-WorkingDirectory=/home/pi/TWCManager
-ExecStart=/usr/bin/python3 -u -m TWCManager
+WorkingDirectory=/app/TWCManager
+ExecStartPre=/usr/bin/python3 setup.py install
 Restart=always
 StartLimitInterval=60s
 StartLimitBurst=5
